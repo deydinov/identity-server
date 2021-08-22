@@ -1,6 +1,7 @@
 ﻿using Abstractions;
 using IdentityServer.Models;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,13 +11,13 @@ using System.Threading.Tasks;
 
 namespace IdentityServer.Stores
 {
-    public class UserStore : IUserStore<User>, IUserPasswordStore<User>, IUserClaimStore<User>, IUserRoleStore<User>
+    public class UserStore : IUserStore<User>, IUserPasswordStore<User>, IUserClaimStore<User>, IUserRoleStore<User>, IUserEmailStore<User>
     {
         private IRepository _repo;
         private static ILookupNormalizer _keyNormalizer;
         private static IRoleStore<Role> _roleStore;
 
-        public UserStore(IRepository repository, ILookupNormalizer keyNormalizer, IRoleStore<Role> roleStore)
+        public UserStore(IRepository repository, ILookupNormalizer keyNormalizer, IRoleStore<Role> roleStore, IConfiguration configuration)
         {
             _repo = repository;
             _keyNormalizer = keyNormalizer;
@@ -189,9 +190,12 @@ namespace IdentityServer.Stores
             cancellationToken.ThrowIfCancellationRequested();
             if (user == null) throw new ArgumentNullException(nameof(user));
 
-            foreach (var claim in user.Claims)
+            foreach (var claim in claims)
             {
-                user.Claims.Remove(claim);
+                if (user.Claims.Contains(claim))
+                {
+                    user.Claims.Remove(claim);
+                }
             }
             await _repo.Update(x => x.Id == user.Id, user);
 
@@ -213,7 +217,7 @@ namespace IdentityServer.Stores
             if (user.Roles == null)
                 user.Roles = new List<Role>();
 
-            var role = await _repo.Single<Role>(x => x.NormalizedName == roleName);
+            var role = await _roleStore.FindByNameAsync(_keyNormalizer.NormalizeName(roleName), cancellationToken);
 
             if (role == null)
             {
@@ -223,9 +227,8 @@ namespace IdentityServer.Stores
             if (!user.Roles.Contains(role))
             {
                 user.Roles.Add(role);
+                await _repo.Update(x => x.Id == user.Id, user);
             }
-
-            await _repo.Update(x => x.Id == user.Id, user);
         }
 
         public async Task RemoveFromRoleAsync(User user, string roleName, CancellationToken cancellationToken)
@@ -237,9 +240,7 @@ namespace IdentityServer.Stores
 
             if (role != null)
             {
-                var pos = user.Roles.IndexOf(role);
                 user.Roles.Remove(role);
-
                 await _repo.Update(x => x.Id == user.Id, user);
             }
         }
@@ -269,6 +270,69 @@ namespace IdentityServer.Stores
             var res = (await _repo.Where<User>(x => x.Roles!=null && x.Roles.Any(r => r.NormalizedName == roleName))).ToList();
 
             return res;
+        }
+
+        //IUserEmailStore<User>
+
+        public async Task SetEmailAsync(User user, string email, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (user == null) throw new ArgumentNullException(nameof(user));
+
+            user.Email = email;
+
+            await Task.FromResult<object>(null);
+        }
+
+        public async Task<string> GetEmailAsync(User user, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (user == null) throw new ArgumentNullException(nameof(user));
+
+            return await Task.FromResult(user.Email);
+        }
+
+        public async Task<bool> GetEmailConfirmedAsync(User user, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (user == null) throw new ArgumentNullException(nameof(user));
+
+            return await Task.FromResult(user.EmailConfirmed);
+        }
+
+        public async Task SetEmailConfirmedAsync(User user, bool confirmed, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (user == null) throw new ArgumentNullException(nameof(user));
+
+            user.EmailConfirmed = confirmed;
+
+            await Task.FromResult<object>(null);
+        }
+
+        public async Task<User> FindByEmailAsync(string normalizedEmail, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return await _repo.Single<User>(x => x.NormalizedEmail == normalizedEmail);
+        }
+
+        public async Task<string> GetNormalizedEmailAsync(User user, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (user == null) throw new ArgumentNullException(nameof(user));
+
+            return await Task.FromResult(user.NormalizedEmail);
+        }
+
+        public async Task SetNormalizedEmailAsync(User user, string normalizedEmail, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (user == null) throw new ArgumentNullException(nameof(user));
+
+            user.NormalizedEmail = normalizedEmail;
+
+            await Task.FromResult<object>(null);
         }
     }
 }

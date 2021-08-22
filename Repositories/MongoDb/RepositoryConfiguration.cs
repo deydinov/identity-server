@@ -10,15 +10,13 @@ namespace MongoDb
 {
     public class RepositoryConfiguration : IRepositoryConfiguration
     {
-        public RepositoryConfiguration()
-        {
-
-        }
         public RepositoryConfiguration(IConfiguration configuration)
         {
-            var conf = configuration.GetSection("Configuration").Get<RepositoryConfiguration>();
-            Path = conf.Path;
+            var conf = configuration.GetSection("MongoDB");
+            Path = conf.GetValue<string>("Path");
+            UseSSL = conf.GetValue<bool>("UseSSL");
         }
-        public string Path { get; set; }
+        public string Path { get; private set; }
+        public bool UseSSL { get; private set; }
     }
 }

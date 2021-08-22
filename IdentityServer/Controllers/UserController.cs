@@ -1,4 +1,5 @@
 ﻿using IdentityServer.Models;
+using IdentityServer.Models.Dto;
 using IdentityServer4.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -6,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace IdentityServer.Controllers
@@ -30,16 +32,46 @@ namespace IdentityServer.Controllers
         [HttpPost]
         public async Task<IActionResult> Register([FromForm] NewUserRequest model)
         {
-            var user = new User { UserName = model.UserName, Email = model.Email };
+            var user = new User
+            {
+                UserName = model.UserName,
+                Email = model.Email,
+            };
+            user.Claims = new List<Claim>
+            {
+                new Claim("name", model.UserName),
+                new Claim("given_name", model.FirstName),
+                new Claim("family_name", model.LastName),
+                new Claim("email", model.Email)
+            };
+
             var result = await _userManager.CreateAsync(user, model.Password);
 
             if (!result.Succeeded) return BadRequest(result.Errors);
 
-            await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("userName", user.UserName));
-            await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("email", user.Email));
-            //await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("role", "user"));
+            _ = await _userManager.AddToRoleAsync(user, "Administrator");
 
-           // await _userManager.AddToRoleAsync(user, "users");
+            /* 
+             role,
+             sub,
+             profile,
+             locale,
+             zoneinfo,
+             birthdate,
+             gender,
+             website,
+             picture,
+             preferred_username,
+             nickname,
+             middle_name,
+             given_name,
+             family_name,
+             name,
+             updated_at,
+             email_verified,
+             email,
+             address
+         */
 
             return Ok();
 

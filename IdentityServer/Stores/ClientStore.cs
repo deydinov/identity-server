@@ -25,5 +25,14 @@ namespace IdentityServer.Stores
             var res = await _repo.Single<Client>(c => c.ClientId == clientId);
             return res;
         }
+
+        public async Task<IdentityResult> CreateAsync(Client client, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (client == null) throw new ArgumentNullException(nameof(client));
+
+            await _repo.Add(client);
+            return IdentityResult.Success;
+        }
     }
 }

@@ -28,10 +28,14 @@ namespace MongoDb
             var connection = new MongoUrlBuilder(configuration.Path);
 
             var settings = MongoClientSettings.FromUrl(connection.ToMongoUrl());
-            settings.SslSettings = new SslSettings
+
+            if (configuration.UseSSL)
             {
-                EnabledSslProtocols = SslProtocols.Tls12
-            };
+                settings.SslSettings = new SslSettings
+                {
+                    EnabledSslProtocols = SslProtocols.Tls12
+                };
+            }
 
             _client = new MongoClient(settings);
             _database = _client.GetDatabase(connection.DatabaseName);

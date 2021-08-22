@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 
 namespace IdentityServer.Models
 {
+    //Need to override IdentityUser to have possibility to store ue claims and roles inside the mongoDb document
+    //In MongoDb we have only one document containing all user data
     public class User : IdentityUser
     {
         public IList<Claim> Claims { get; set; }

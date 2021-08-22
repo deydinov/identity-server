@@ -51,7 +51,10 @@ namespace IdentityServer
             services.AddScoped<IRepositoryConfiguration, RepositoryConfiguration>();
             services.AddScoped<ILookupNormalizer, UpperInvariantLookupNormalizer>();
 
-            services.AddIdentity<User, Role>()
+            services.AddIdentity<User, Role>(options =>
+            {
+               // options.Password.ReqA
+            })
                 .AddMongoDbStoresAndServices()
                 .AddDefaultTokenProviders();
 
@@ -70,7 +73,8 @@ namespace IdentityServer
             //.AddResourceOwnerValidator<SaycPassValidation>()
             //.AddPersistedGrantStore<SaycGrantStore>()
 
-            services.AddCors(options => options.AddPolicy("AllowAll", p => p.AllowAnyOrigin()
+            services.AddCors(options => options.AddPolicy("AllowAll", p => p
+               .AllowAnyOrigin()
                .AllowAnyMethod()
                .AllowAnyHeader()));
 

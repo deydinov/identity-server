@@ -18,6 +18,15 @@ namespace IdentityServer.Stores
         {
             _repo = repository;
             _keyNormalizer = keyNormalizer;
+
+            if (_repo.CollectionEmpty<Role>())
+            {
+                _repo.AddMany(new List<Role>
+                {
+                    new Role("Administrator") { NormalizedName = "ADMINISTRATOR" },
+                    new Role("User") { NormalizedName = "USER"}
+                });
+            }
         }
 
         public async Task<IdentityResult> CreateAsync(Role role, CancellationToken cancellationToken)

@@ -11,13 +11,27 @@ using System.Threading.Tasks;
 
 namespace IdentityServer.Stores
 {
-    public class ResourcetStore : IResourceStore
+    public class ResourceStore : IResourceStore
     {
         private IRepository _repo;
 
-        public ResourcetStore(IRepository repository)
+        public ResourceStore(IRepository repository)
         {
             _repo = repository;
+
+            if (_repo.CollectionEmpty<IdentityResource>())
+            {
+                _repo.AddMany(new List<IdentityResource>
+                {
+                    new IdentityServer4.Models.IdentityResources.OpenId(),
+                    new IdentityServer4.Models.IdentityResources.Profile(),
+                    new IdentityServer4.Models.IdentityResources.Email(),
+                    new IdentityServer4.Models.IdentityResources.Phone(),
+                    new IdentityServer4.Models.IdentityResources.Address(),
+                    new IdentityResources.Roles(),
+
+                });
+            }
         }
 
         public async Task<IEnumerable<ApiResource>> FindApiResourcesByNameAsync(IEnumerable<string> apiResourceNames)

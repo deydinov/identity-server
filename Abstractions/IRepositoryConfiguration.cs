@@ -8,6 +8,7 @@ namespace Abstractions
 {
     public interface IRepositoryConfiguration
     {
-        string Path { get; set; }
+        string Path { get; }
+        bool UseSSL { get; }
     }
 }
